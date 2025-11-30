@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fourth Crusade - Endgame Outcome Calculator</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState } = React;
+
+        const EndgameCalculator = () => {
+            // State for committee decisions
+            const [emperor, setEmperor] = useState('');
+            const [feudalism, setFeudalism] = useState('');
+            const [patriarch, setPatriarch] = useState('');
+            const [hadSack, setHadSack] = useState(false);
+            const [nefasScore, setNefasScore] = useState(0);
+            
+            // Other factors
+            const [bulgarianOffer, setBulgarianOffer] = useState(false);
+            const [greekTitles, setGreekTitles] = useState(0);
+            const [cistercianMonasteries, setCistercianMonasteries] = useState(false);
+            const [blackSeaMonopoly, setBlackSeaMonopoly] = useState(false);
+            const [totalTradeMonopoly, setTotalTradeMonopoly] = useState(false);
+            const [noRelicsGiven, setNoRelicsGiven] = useState(false);
+            const [majorRelicsGiven, setMajorRelicsGiven] = useState(0);
+            const [crusadersLeft, setCrusadersLeft] = useState(0);
+            const [civilWarFought, setCivilWarFought] = useState(false);
+            
+            // Instructor discretion
+            const [instructorAdjustment, setInstructorAdjustment] = useState(0);
+            
+            // Die roll
+            const [dieRoll, setDieRoll] = useState(null);
+            const [showResult, setShowResult] = useState(false);
+
+            const calculateBaseScore = () => {
+                let score = 0;
+
+                // Emperor
+                if (emperor === 'greek') score += 3;
+                else if (emperor === 'boniface-greek') score += 1;
+                else if (emperor === 'boniface-alone') score += 0;
+                else if (emperor === 'anna') score -= 1;
+                else if (emperor === 'other-crusader') score -= 2;
+                else if (emperor === 'venetian') score -= 3;
+
+                // Feudalism
+                if (feudalism === 'pronoia') score += 1;
+                else if (feudalism === 'feudalism') score -= 4;
+
+                // Patriarch
+                if (patriarch === 'greek-independent') score += 4;
+                else if (patriarch === 'greek-submit') score += 2;
+                else if (patriarch === 'dual-independent') score += 1;
+                else if (patriarch === 'dual-submit') score += 0;
+                else if (patriarch === 'latin') score -= 2;
+
+                // Looting
+                if (!hadSack) {
+                    score += 5;
+                } else {
+                    score -= Math.max(0, nefasScore);
+                }
+
+                // Other Factors
+                if (bulgarianOffer) score += 2;
+                score += greekTitles * 1;
+                if (cistercianMonasteries) score -= 2;
+                if (blackSeaMonopoly) score -= 2;
+                if (totalTradeMonopoly) score -= 4;
+                if (noRelicsGiven) score += 1;
+                score -= majorRelicsGiven * 2;
+                score -= crusadersLeft * 1;
+                if (civilWarFought) score -= 3;
+                score += instructorAdjustment;
+
+                return score;
+            };
+
+            const rollDie = () => {
+                const roll = Math.floor(Math.random() * 6) + 1;
+                setDieRoll(roll);
+                setShowResult(true);
+            };
+
+            const getFinalScore = () => {
+                const base = calculateBaseScore();
+                return dieRoll !== null ? base + dieRoll : base;
+            };
+
+            const getOutcome = (finalScore) => {
+                if (finalScore > 10) {
+                    return {
+                        title: "🌈 DECISIVE CRUSADER VICTORY",
+                        color: "from-green-600 to-emerald-700",
+                        description: "Greeks accept the empire - the crusade continues on to decisive victory with Greek help, the churches reunite, and rainbows are seen across the Mediterranean!",
+                        historical: "This is the absolute best outcome - far better than history. The Fourth Crusade achieves its spiritual and military goals with Greek cooperation."
+                    };
+                } else if (finalScore > 8) {
+                    return {
+                        title: "✝️ JERUSALEM RECLAIMED (TEMPORARY)",
+                        color: "from-green-500 to-emerald-600",
+                        description: "Greeks accept the empire - the crusade continues on to take Jerusalem temporarily, and the empire holds.",
+                        historical: "An excellent outcome. The crusade succeeds militarily and the Latin Empire survives, though Jerusalem won't stay in Christian hands forever."
+                    };
+                } else if (finalScore > 7) {
+                    return {
+                        title: "🏰 EMPIRE SURVIVES, CRUSADE FAILS",
+                        color: "from-blue-500 to-indigo-600",
+                        description: "Greeks accept the empire - the crusade continues on but fails to take Jerusalem. However, the empire holds.",
+                        historical: "A mixed outcome - the crusade's original goal fails, but the Latin Empire is stable and accepted by Greeks."
+                    };
+                } else if (finalScore > 5) {
+                    return {
+                        title: "⚔️ CRUSADE FAILS, EMPIRE FALLS",
+                        color: "from-yellow-500 to-orange-500",
+                        description: "Greeks accept the empire initially - the crusade continues on but fails to take Jerusalem, and the empire eventually falls.",
+                        historical: "The crusade fails and the Latin Empire proves unsustainable, though there's initial Greek cooperation."
+                    };
+                } else if (finalScore > 2) {
+                    return {
+                        title: "🛡️ GREEK REVOLT CRUSHED - PYRRHIC VICTORY",
+                        color: "from-orange-500 to-red-500",
+                        description: "Greeks initially rebel but are crushed by crusaders. However, the crusaders are too depleted to continue to Jerusalem and fight the Turks instead to a draw.",
+                        historical: "A costly victory - the Greeks are defeated but the crusade is exhausted and achieves nothing further."
+                    };
+                } else if (finalScore > 0) {
+                    return {
+                        title: "😞 CRUSADE ABANDONED IN DISGUST",
+                        color: "from-orange-600 to-red-600",
+                        description: "Greeks initially rebel but are crushed by crusaders. However, the crusaders are too depleted to continue to Jerusalem, and most go home in disgust.",
+                        historical: "The crusade ends in failure and demoralization. Many crusaders abandon the cause entirely."
+                    };
+                } else if (finalScore > -2) {
+                    return {
+                        title: "⚖️ HISTORICAL OUTCOME - FIFTY-YEAR STRUGGLE",
+                        color: "from-red-600 to-red-700",
+                        description: "Greeks rebel and fight the crusaders to a draw, setting up rival Greek states. Greeks and crusaders are locked in a fifty-year struggle in which the Greeks eventually prevail.",
+                        historical: "This is what actually happened in 1204. The Latin Empire lasted until 1261, constantly fighting Greek resistance, until Greeks recaptured Constantinople."
+                    };
+                } else if (finalScore > -5) {
+                    return {
+                        title: "🔥 CRUSADERS DRIVEN OUT IN SHAME",
+                        color: "from-red-700 to-red-800",
+                        description: "Greeks rebel and fight a two-year civil war to drive out the crusaders, who leave in shame.",
+                        historical: "Worse than history - the Latin Empire collapses quickly and crusaders are expelled from Byzantine lands entirely."
+                    };
+                } else {
+                    return {
+                        title: "☠️ CATASTROPHIC DEFEAT - CRUSADE MOVEMENT ENDS",
+                        color: "from-red-800 to-red-900",
+                        description: "Greeks rebel and quickly crush the crusaders. The Greeks order all crusaders tortured and blinded for their crimes, with leaders crucified. The crusade movement falters and no further crusades are called.",
+                        historical: "The worst possible outcome. Total defeat and atrocities that end the crusading movement itself. (Note: Greeks historically crucified crusader Amedee Pofey in 1210.)"
+                    };
+                }
+            };
+
+            const baseScore = calculateBaseScore();
+            const finalScore = getFinalScore();
+            const outcome = getOutcome(finalScore);
+
+            return (
+                <div className="min-h-screen bg-gray-50 p-6">
+                    <div className="max-w-6xl mx-auto">
+                        {/* Header */}
+                        <div className="bg-gradient-to-r from-indigo-600 to-purple-700 text-white rounded-lg shadow-lg p-8 mb-8">
+                            <h1 className="text-4xl font-bold mb-2">🎲 Fourth Crusade: Endgame Outcome Calculator</h1>
+                            <p className="text-xl text-indigo-100">Determine the fate of the Latin Empire</p>
+                            <p className="text-sm text-indigo-200 mt-2">
+                                Based on committee decisions + emperor's die roll
+                            </p>
+                        </div>
+
+                        {/* Instructions */}
+                        <div className="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-6 mb-6">
+                            <h3 className="font-bold text-blue-900 mb-2">📖 How to Use:</h3>
+                            <ol className="text-sm text-blue-800 space-y-1">
+                                <li>1. Enter all committee decisions and outcomes below</li>
+                                <li>2. Review the base score calculation</li>
+                                <li>3. Have the newly crowned emperor roll a d6</li>
+                                <li>4. Add die roll to base score for final result</li>
+                                <li>5. Announce the outcome dramatically to your class!</li>
+                            </ol>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                            {/* Left Column */}
+                            <div className="space-y-6">
+                                {/* Emperor */}
+                                <div className="bg-white rounded-lg shadow-md p-6">
+                                    <h2 className="text-xl font-bold text-gray-800 mb-4">👑 Emperor</h2>
+                                    <div className="space-y-2">
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input type="radio" name="emperor" value="greek" 
+                                                checked={emperor === 'greek'} 
+                                                onChange={(e) => setEmperor(e.target.value)}
+                                                className="w-4 h-4" />
+                                            <span className="text-sm">Greek Emperor or Empress <span className="text-green-600 font-bold">(+3)</span></span>
+                                        </label>
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input type="radio" name="emperor" value="boniface-greek" 
+                                                checked={emperor === 'boniface-greek'} 
+                                                onChange={(e) => setEmperor(e.target.value)}
+                                                className="w-4 h-4" />
+                                            <span className="text-sm">Boniface with Greek Empress (Byzantine widow/hostage) <span className="text-blue-600 font-bold">(+1)</span></span>
+                                        </label>
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input type="radio" name="emperor" value="boniface-alone" 
+                                                checked={emperor === 'boniface-alone'} 
+                                                onChange={(e) => setEmperor(e.target.value)}
+                                                className="w-4 h-4" />
+                                            <span className="text-sm">Boniface as Emperor Alone <span className="text-gray-600 font-bold">(0)</span></span>
+                                        </label>
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input type="radio" name="emperor" value="anna" 
+                                                checked={emperor === 'anna'} 
+                                                onChange={(e) => setEmperor(e.target.value)}
+                                                className="w-4 h-4" />
+                                            <span className="text-sm">Anna of France as Empress Alone <span className="text-orange-600 font-bold">(-1)</span></span>
+                                        </label>
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input type="radio" name="emperor" value="other-crusader" 
+                                                checked={emperor === 'other-crusader'} 
+                                                onChange={(e) => setEmperor(e.target.value)}
+                                                className="w-4 h-4" />
+                                            <span className="text-sm">Other Crusader as Emperor <span className="text-orange-600 font-bold">(-2)</span></span>
+                                        </label>
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input type="radio" name="emperor" value="venetian" 
+                                                checked={emperor === 'venetian'} 
+                                                onChange={(e) => setEmperor(e.target.value)}
+                                                className="w-4 h-4" />
+                                            <span className="text-sm">Venetian Emperor <span className="text-red-600 font-bold">(-3)</span></span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                {/* Feudalism */}
+                                <div className="bg-white rounded-lg shadow-md p-6">
+                                    <h2 className="text-xl font-bold text-gray-800 mb-4">🏛️ Administrative System</h2>
+                                    <div className="space-y-2">
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input type="radio" name="feudalism" value="pronoia" 
+                                                checked={feudalism === 'pronoia'} 
+                                                onChange={(e) => setFeudalism(e.target.value)}
+                                                className="w-4 h-4" />
+                                            <span className="text-sm">Pronoia Maintained (Greek system) <span className="text-green-600 font-bold">(+1)</span></span>
+                                        </label>
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input type="radio" name="feudalism" value="feudalism" 
+                                                checked={feudalism === 'feudalism'} 
+                                                onChange={(e) => setFeudalism(e.target.value)}
+                                                className="w-4 h-4" />
+                                            <span className="text-sm">Feudalism Imposed (Latin system) <span className="text-red-600 font-bold">(-4)</span></span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                {/* Patriarch */}
+                                <div className="bg-white rounded-lg shadow-md p-6">
+                                    <h2 className="text-xl font-bold text-gray-800 mb-4">⛪ Patriarch</h2>
+                                    <div className="space-y-2">
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input type="radio" name="patriarch" value="greek-independent" 
+                                                checked={patriarch === 'greek-independent'} 
+                                                onChange={(e) => setPatriarch(e.target.value)}
+                                                className="w-4 h-4" />
+                                            <span className="text-sm">Greek Patriarch retained, independent from Rome <span className="text-green-600 font-bold">(+4)</span></span>
+                                        </label>
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input type="radio" name="patriarch" value="greek-submit" 
+                                                checked={patriarch === 'greek-submit'} 
+                                                onChange={(e) => setPatriarch(e.target.value)}
+                                                className="w-4 h-4" />
+                                            <span className="text-sm">Greek Patriarch forced to submit to Rome / replaced with pro-papal Greek <span className="text-blue-600 font-bold">(+2)</span></span>
+                                        </label>
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input type="radio" name="patriarch" value="dual-independent" 
+                                                checked={patriarch === 'dual-independent'} 
+                                                onChange={(e) => setPatriarch(e.target.value)}
+                                                className="w-4 h-4" />
+                                            <span className="text-sm">Dual Patriarchate with liturgical independence <span className="text-blue-600 font-bold">(+1)</span></span>
+                                        </label>
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input type="radio" name="patriarch" value="dual-submit" 
+                                                checked={patriarch === 'dual-submit'} 
+                                                onChange={(e) => setPatriarch(e.target.value)}
+                                                className="w-4 h-4" />
+                                            <span className="text-sm">Dual Patriarchate, forced to submit to Rome <span className="text-gray-600 font-bold">(0)</span></span>
+                                        </label>
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input type="radio" name="patriarch" value="latin" 
+                                                checked={patriarch === 'latin'} 
+                                                onChange={(e) => setPatriarch(e.target.value)}
+                                                className="w-4 h-4" />
+                                            <span className="text-sm">Latin Patriarch <span className="text-red-600 font-bold">(-2)</span></span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                {/* Looting */}
+                                <div className="bg-white rounded-lg shadow-md p-6">
+                                    <h2 className="text-xl font-bold text-gray-800 mb-4">💰 Sack of Constantinople</h2>
+                                    <div className="space-y-3">
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input type="checkbox" 
+                                                checked={hadSack} 
+                                                onChange={(e) => setHadSack(e.target.checked)}
+                                                className="w-4 h-4" />
+                                            <span className="text-sm font-semibold">There was a sack</span>
+                                        </label>
+                                        {hadSack ? (
+                                            <div className="ml-6">
+                                                <label className="block text-sm text-gray-700 mb-1">
+                                                    Total Class Nefas Score (from decoder):
+                                                </label>
+                                                <input 
+                                                    type="number" 
+                                                    value={nefasScore}
+                                                    onChange={(e) => setNefasScore(parseInt(e.target.value) || 0)}
+                                                    className="w-32 p-2 border border-gray-300 rounded"
+                                                    placeholder="0"
+                                                />
+                                                <div className="text-xs text-gray-500 mt-1">
+                                                    Subtracts nefas from base score <span className="text-red-600 font-bold">(-{Math.max(0, nefasScore)})</span>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="ml-6 text-sm text-green-600 font-semibold">
+                                                No sack: +5 points
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Right Column */}
+                            <div className="space-y-6">
+                                {/* Other Factors */}
+                                <div className="bg-white rounded-lg shadow-md p-6">
+                                    <h2 className="text-xl font-bold text-gray-800 mb-4">📜 Other Factors</h2>
+                                    <div className="space-y-4">
+                                        {/* Bulgarian Offer */}
+                                        <div className="border-b pb-3">
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input type="checkbox" 
+                                                    checked={bulgarianOffer} 
+                                                    onChange={(e) => setBulgarianOffer(e.target.checked)}
+                                                    className="w-4 h-4" />
+                                                <span className="text-sm">Crusaders accepted Bulgarian offer of independence <span className="text-green-600 font-bold">(+2)</span></span>
+                                            </label>
+                                        </div>
+
+                                        {/* Greek Titles */}
+                                        <div className="border-b pb-3">
+                                            <label className="block text-sm text-gray-700 mb-2">
+                                                Titles set aside for Greeks or Bulgarians in partition:
+                                            </label>
+                                            <input 
+                                                type="number" 
+                                                value={greekTitles}
+                                                onChange={(e) => setGreekTitles(parseInt(e.target.value) || 0)}
+                                                min="0"
+                                                className="w-32 p-2 border border-gray-300 rounded"
+                                                placeholder="0"
+                                            />
+                                            <div className="text-xs text-gray-500 mt-1">
+                                                +1 per title <span className="text-green-600 font-bold">(+{greekTitles})</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Cistercian Monasteries */}
+                                        <div className="border-b pb-3">
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input type="checkbox" 
+                                                    checked={cistercianMonasteries} 
+                                                    onChange={(e) => setCistercianMonasteries(e.target.checked)}
+                                                    className="w-4 h-4" />
+                                                <span className="text-sm">Partition gives Greek monasteries to Cistercians <span className="text-red-600 font-bold">(-2)</span></span>
+                                            </label>
+                                        </div>
+
+                                        {/* Venice Trade */}
+                                        <div className="border-b pb-3">
+                                            <label className="flex items-center gap-2 cursor-pointer mb-2">
+                                                <input type="checkbox" 
+                                                    checked={blackSeaMonopoly} 
+                                                    onChange={(e) => setBlackSeaMonopoly(e.target.checked)}
+                                                    className="w-4 h-4" />
+                                                <span className="text-sm">Venice given Black Sea trade monopoly <span className="text-red-600 font-bold">(-2)</span></span>
+                                            </label>
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input type="checkbox" 
+                                                    checked={totalTradeMonopoly} 
+                                                    onChange={(e) => setTotalTradeMonopoly(e.target.checked)}
+                                                    className="w-4 h-4" />
+                                                <span className="text-sm">Venice given total trade monopoly <span className="text-red-600 font-bold">(-4)</span></span>
+                                            </label>
+                                        </div>
+
+                                        {/* Relics */}
+                                        <div className="border-b pb-3">
+                                            <label className="flex items-center gap-2 cursor-pointer mb-2">
+                                                <input type="checkbox" 
+                                                    checked={noRelicsGiven} 
+                                                    onChange={(e) => setNoRelicsGiven(e.target.checked)}
+                                                    className="w-4 h-4" />
+                                                <span className="text-sm">No relics given away by new emperor <span className="text-green-600 font-bold">(+1)</span></span>
+                                            </label>
+                                            <label className="block text-sm text-gray-700 mb-2 ml-6">
+                                                Major relics given out by new emperor:
+                                            </label>
+                                            <input 
+                                                type="number" 
+                                                value={majorRelicsGiven}
+                                                onChange={(e) => setMajorRelicsGiven(parseInt(e.target.value) || 0)}
+                                                min="0"
+                                                className="w-32 p-2 border border-gray-300 rounded ml-6"
+                                                placeholder="0"
+                                            />
+                                            <div className="text-xs text-gray-500 mt-1 ml-6">
+                                                -2 per major relic <span className="text-red-600 font-bold">(-{majorRelicsGiven * 2})</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Crusaders Left */}
+                                        <div className="border-b pb-3">
+                                            <label className="block text-sm text-gray-700 mb-2">
+                                                Crusaders who left the army after committee results:
+                                            </label>
+                                            <input 
+                                                type="number" 
+                                                value={crusadersLeft}
+                                                onChange={(e) => setCrusadersLeft(parseInt(e.target.value) || 0)}
+                                                min="0"
+                                                className="w-32 p-2 border border-gray-300 rounded"
+                                                placeholder="0"
+                                            />
+                                            <div className="text-xs text-gray-500 mt-1">
+                                                -1 per crusader <span className="text-red-600 font-bold">(-{crusadersLeft})</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Civil War */}
+                                        <div>
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input type="checkbox" 
+                                                    checked={civilWarFought} 
+                                                    onChange={(e) => setCivilWarFought(e.target.checked)}
+                                                    className="w-4 h-4" />
+                                                <span className="text-sm">A civil war was fought by the crusaders <span className="text-red-600 font-bold">(-3)</span></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Instructor Discretion */}
+                                <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg shadow-md p-6 border-2 border-purple-300">
+                                    <h2 className="text-xl font-bold text-gray-800 mb-4">🎓 Instructor Discretion</h2>
+                                    <p className="text-sm text-gray-600 mb-4">
+                                        Did your students do something exceptionally good or bad that should be reflected in the base score?
+                                    </p>
+                                    <div className="space-y-3">
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                            Adjustment to Base Score:
+                                        </label>
+                                        <select 
+                                            value={instructorAdjustment}
+                                            onChange={(e) => setInstructorAdjustment(parseInt(e.target.value))}
+                                            className="w-full p-3 border-2 border-purple-300 rounded-lg text-base font-medium"
+                                        >
+                                            <option value="0">No adjustment (0)</option>
+                                            <option value="2">Very good outcome (+2)</option>
+                                            <option value="1">Somewhat good outcome (+1)</option>
+                                            <option value="-1">Somewhat bad outcome (-1)</option>
+                                            <option value="-2">Very bad outcome (-2)</option>
+                                        </select>
+                                        <div className="bg-purple-100 rounded-lg p-3 mt-3">
+                                            <h4 className="font-bold text-purple-900 text-sm mb-2">Examples of when to use:</h4>
+                                            <ul className="text-xs text-purple-800 space-y-1">
+                                                <li><strong>Very Good (+2):</strong> Extraordinary compromise, prevented additional conflict, brilliant negotiation beyond what's tracked</li>
+                                                <li><strong>Somewhat Good (+1):</strong> Thoughtful debate, creative solutions, excellent roleplay</li>
+                                                <li><strong>Somewhat Bad (-1):</strong> Rushed decisions, ignored key factions, poor engagement</li>
+                                                <li><strong>Very Bad (-2):</strong> Committee breakdown, personal attacks, refused to participate</li>
+                                            </ul>
+                                        </div>
+                                        {instructorAdjustment !== 0 && (
+                                            <div className="mt-3 p-3 bg-white rounded border-2 border-purple-400">
+                                                <div className="text-sm text-gray-700">
+                                                    <strong>Current adjustment to base score:</strong> 
+                                                    <span className={`ml-2 font-bold text-lg ${instructorAdjustment > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                        {instructorAdjustment > 0 ? '+' : ''}{instructorAdjustment}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Base Score Display */}
+                        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                            <h2 className="text-2xl font-bold text-gray-800 mb-4">📊 Score Calculation</h2>
+                            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm mb-4">
+                                <div className="bg-gray-50 rounded p-3">
+                                    <div className="text-gray-600 text-xs mb-1">Emperor</div>
+                                    <div className="font-bold text-lg">
+                                        {emperor === 'greek' ? '+3' :
+                                         emperor === 'boniface-greek' ? '+1' :
+                                         emperor === 'boniface-alone' ? '0' :
+                                         emperor === 'anna' ? '-1' :
+                                         emperor === 'other-crusader' ? '-2' :
+                                         emperor === 'venetian' ? '-3' : '0'}
+                                    </div>
+                                </div>
+                                <div className="bg-gray-50 rounded p-3">
+                                    <div className="text-gray-600 text-xs mb-1">Feudalism</div>
+                                    <div className="font-bold text-lg">
+                                        {feudalism === 'pronoia' ? '+1' :
+                                         feudalism === 'feudalism' ? '-4' : '0'}
+                                    </div>
+                                </div>
+                                <div className="bg-gray-50 rounded p-3">
+                                    <div className="text-gray-600 text-xs mb-1">Patriarch</div>
+                                    <div className="font-bold text-lg">
+                                        {patriarch === 'greek-independent' ? '+4' :
+                                         patriarch === 'greek-submit' ? '+2' :
+                                         patriarch === 'dual-independent' ? '+1' :
+                                         patriarch === 'dual-submit' ? '0' :
+                                         patriarch === 'latin' ? '-2' : '0'}
+                                    </div>
+                                </div>
+                                <div className="bg-gray-50 rounded p-3">
+                                    <div className="text-gray-600 text-xs mb-1">Sack</div>
+                                    <div className="font-bold text-lg">
+                                        {hadSack ? `-${Math.max(0, nefasScore)}` : '+5'}
+                                    </div>
+                                </div>
+                                <div className="bg-gray-50 rounded p-3">
+                                    <div className="text-gray-600 text-xs mb-1">Other</div>
+                                    <div className="font-bold text-lg">
+                                        {(bulgarianOffer ? 2 : 0) + greekTitles - (cistercianMonasteries ? 2 : 0) - 
+                                         (blackSeaMonopoly ? 2 : 0) - (totalTradeMonopoly ? 4 : 0) + 
+                                         (noRelicsGiven ? 1 : 0) - (majorRelicsGiven * 2) - crusadersLeft - 
+                                         (civilWarFought ? 3 : 0) > 0 ? '+' : ''}
+                                        {(bulgarianOffer ? 2 : 0) + greekTitles - (cistercianMonasteries ? 2 : 0) - 
+                                         (blackSeaMonopoly ? 2 : 0) - (totalTradeMonopoly ? 4 : 0) + 
+                                         (noRelicsGiven ? 1 : 0) - (majorRelicsGiven * 2) - crusadersLeft - 
+                                         (civilWarFought ? 3 : 0)}
+                                    </div>
+                                </div>
+                                <div className="bg-purple-50 rounded p-3 border border-purple-300">
+                                    <div className="text-gray-600 text-xs mb-1">Instructor</div>
+                                    <div className="font-bold text-lg">
+                                        {instructorAdjustment > 0 ? '+' : ''}{instructorAdjustment}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="border-t pt-4">
+                                <div className="flex justify-between items-center">
+                                    <div className="text-lg font-bold text-gray-700">Base Score (before die roll):</div>
+                                    <div className="text-4xl font-bold text-indigo-600">{baseScore}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Die Roll Section */}
+                        <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg shadow-md p-6 mb-6 border-2 border-purple-300">
+                            <h2 className="text-2xl font-bold text-gray-800 mb-4">🎲 Emperor's Die Roll</h2>
+                            <p className="text-sm text-gray-600 mb-4">
+                                Have the newly crowned emperor roll a six-sided die and add the result to the base score.
+                            </p>
+                            {dieRoll === null ? (
+                                <button
+                                    onClick={rollDie}
+                                    className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 px-8 rounded-lg text-xl shadow-lg transition-colors"
+                                >
+                                    🎲 Roll the Die
+                                </button>
+                            ) : (
+                                <div className="space-y-4">
+                                    <div className="bg-white rounded-lg p-6 border-2 border-purple-400">
+                                        <div className="text-center">
+                                            <div className="text-6xl mb-2">🎲</div>
+                                            <div className="text-5xl font-bold text-purple-600 mb-2">{dieRoll}</div>
+                                            <div className="text-sm text-gray-600">Die Roll Result</div>
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-between items-center bg-purple-100 rounded-lg p-4">
+                                        <span className="text-lg font-bold">Final Score:</span>
+                                        <span className="text-3xl font-bold text-purple-700">{baseScore} + {dieRoll} = {finalScore}</span>
+                                    </div>
+                                    <button
+                                        onClick={() => {setDieRoll(null); setShowResult(false);}}
+                                        className="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-6 rounded transition-colors"
+                                    >
+                                        Roll Again
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Outcome Display */}
+                        {showResult && (
+                            <div className={`bg-gradient-to-r ${outcome.color} text-white rounded-lg shadow-lg p-8 mb-6`}>
+                                <div className="text-center mb-6">
+                                    <div className="text-6xl font-bold mb-4">{finalScore}</div>
+                                    <div className="text-sm text-white/80 mb-2">Final Score</div>
+                                    <h2 className="text-4xl font-bold mb-4">{outcome.title}</h2>
+                                </div>
+                                <div className="border-t border-white/30 pt-6">
+                                    <p className="text-lg text-white/90 mb-4">{outcome.description}</p>
+                                    <div className="bg-white/20 rounded-lg p-4">
+                                        <h3 className="font-bold mb-2">📚 Historical Context:</h3>
+                                        <p className="text-sm text-white/90">{outcome.historical}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Note to Instructors */}
+                        <div className="bg-yellow-50 border-l-4 border-yellow-500 rounded-lg p-6">
+                            <h3 className="font-bold text-yellow-900 mb-2">⚠️ Note to Instructors:</h3>
+                            <p className="text-sm text-yellow-800">
+                                Your students are probably going to lose. In fact, the game is designed so that they lose more times than not. 
+                                That is part of the point of the game. Historically, the greed and ambition of the crusaders led them to make 
+                                decisions that alienated the Greeks and Bulgarians, creating more enemies than they could handle. 
+                                Most likely, your students did the same.
+                            </p>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="mt-8 text-center text-gray-600 text-sm">
+                            <p>Fourth Crusade: Endgame Outcome Calculator</p>
+                            <p className="text-xs mt-1">Based on committee decisions + emperor's d6 roll</p>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<EndgameCalculator />, document.getElementById('root'));
+    </script>
+</body>
+</html>
